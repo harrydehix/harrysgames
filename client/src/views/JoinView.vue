@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import logo from "../assets/logo.svg";
 import useSession from "../composables/useSession";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
-import { useSound } from "@vueuse/sound";
+import { useSound, type ReturnedValue } from "@vueuse/sound";
 import { useToast } from "vue-toastification";
 import joinButtonSfx from "../assets/sounds/join-lobby.mp3";
 import errorButtonSfx from "../assets/sounds/error.mp3";
 import buttonSfx from "../assets/sounds/button.mp3";
 import extractErrorMessage from "../api/extractErrorMessage";
+import { useMusicPlayer } from "../composables/useMusicPlayer";
 
 const { play: playJoinSound } = useSound(joinButtonSfx);
 const { play: playErrorSound } = useSound(errorButtonSfx);
@@ -21,6 +22,7 @@ const { join, lobby, fetchLobby } = useSession();
 const username = ref<string>("");
 const lobbyCode = ref<string | undefined>(route.query.lobby as string);
 const validatedLobby = ref<boolean>(route.query.lobby !== undefined);
+const { music } = useMusicPlayer();
 
 onMounted(() => {
     if (lobby.value) {
@@ -50,6 +52,7 @@ async function joinLobby() {
         }
         await join(username.value, route.query.lobby as string);
         playJoinSound();
+        music.play();
         router.push("/lobby");
     } catch (err: unknown) {
         playErrorSound();
@@ -86,7 +89,7 @@ async function joinLobby() {
                     </button>
                 </form>
                 <form
-                    :class="$style.inputStep"
+                    :class="`${$style.inputStep} ${$style.second}`"
                     v-else
                     @submit.prevent="joinLobby"
                 >
@@ -151,18 +154,20 @@ async function joinLobby() {
     display: flex;
     position: relative;
     justify-content: center;
+    height: 5rem;
 }
 
 .inputStep {
     display: flex;
     flex-direction: row;
     gap: 0.5rem;
+    height: 100%;
     position: absolute;
 }
 
 .input {
     display: flex;
-    height: 5rem;
+    height: 100%;
     padding: 0 1.5rem;
     font-size: 1.4rem;
     border-radius: 1rem;
