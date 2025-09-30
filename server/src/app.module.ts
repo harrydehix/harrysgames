@@ -6,6 +6,7 @@ import { StadtLandVollpfostenModule } from './stadt_land_vollpfosten/stadt_land_
 import { KyselyModule } from 'nestjs-kysely';
 import { PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
+import { postgresDialect } from './database/database';
 
 @Module({
   imports: [
@@ -13,16 +14,7 @@ import { Pool } from 'pg';
     LobbiesModule,
     StadtLandVollpfostenModule,
     KyselyModule.forRoot({
-      dialect: new PostgresDialect({
-        pool: new Pool({
-          database: 'harrysgames',
-          host: 'localhost',
-          user: 'postgres',
-          password: 'root',
-          port: 5433,
-          max: 10,
-        }),
-      }) as any,
+      dialect: postgresDialect() as any,
     }),
   ],
   controllers: [AppController],
