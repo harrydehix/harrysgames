@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Kysely } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
 import { Database } from 'src/database/database';
@@ -37,8 +37,25 @@ export class LobbiesService {
     };
   }
 
+  async findOne(code: string) {
+    const lobby = await this.db
+      .selectFrom('lobbies')
+      .selectAll()
+      .where('code', '=', code)
+      .executeTakeFirst();
+    if (!lobby) throw new NotFoundException('Invalid lobby code!');
+    return lobby;
+  }
+
   async delete(code: string) {
-    await this.db.deleteFrom('lobbies').where('code', '=', code);
+    const result = await this.db
+      .deleteFrom('lobbies')
+      .where('code', '=', code)
+      .execute();
+
+    if (result.length === 0) {
+      throw new NotFoundException('Lobby not found!');
+    }
     this.logger.debug(`Deleted lobby '${code}'!`);
   }
 }

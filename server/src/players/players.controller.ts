@@ -28,22 +28,13 @@ export class PlayersController {
   }
 
   @Post()
-  async register(@Body(ValidationPipe) input: CreatePlayerDto) {
-    return await this.playersService.register(input);
-  }
-
-  @UseGuards(AuthGuard)
-  @Post('lobby/:code')
-  async joinLobby(
-    @Param('code') code: string,
-    @Req() req: AuthenticatedRequest,
-  ) {
-    return await this.playersService.joinLobby(req.user.name, code);
+  async join(@Body(ValidationPipe) input: CreatePlayerDto) {
+    return await this.playersService.join(input);
   }
 
   @UseGuards(AuthGuard)
   @Delete('lobby')
-  async leaveLobby(@Req() req: AuthenticatedRequest) {
-    return await this.playersService.leaveLobby(req.user.name);
+  async exit(@Req() req: AuthenticatedRequest) {
+    return await this.playersService.exit(req.user.name);
   }
 }

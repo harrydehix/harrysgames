@@ -22,6 +22,11 @@ export class LobbiesController {
     return await this.lobbiesService.findAll();
   }
 
+  @Get('/:code')
+  async findOne(@Param('code') code: string) {
+    return await this.lobbiesService.findOne(code);
+  }
+
   @UseGuards(AdminGuard)
   @Post()
   async create(@Body(ValidationPipe) input: CreateLobbyDto) {
@@ -30,7 +35,7 @@ export class LobbiesController {
 
   @UseGuards(AdminGuard)
   @Delete('/:code')
-  async drop(@Param() code: string) {
+  async drop(@Param('code') code: string) {
     return await this.lobbiesService.delete(code);
   }
 }

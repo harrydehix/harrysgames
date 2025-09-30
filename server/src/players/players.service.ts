@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Kysely } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
-import { Database } from 'src/database/database';
+import { Database, LobbyTable } from 'src/database/database';
 import CreatePlayerDto from './dto/CreatePlayerDto';
 import * as randomstring from 'randomstring';
 import { AUTH_TOKEN_LENGTH } from 'src/database/migrations/1_create_players';
@@ -17,7 +17,7 @@ export class PlayersService {
 
   constructor(@InjectKysely() private readonly db: Kysely<Database>) {}
 
-  async register(dto: CreatePlayerDto) {
+  async join(dto: CreatePlayerDto) {
     if (
       await this.db
         .selectFrom('players')
@@ -32,12 +32,19 @@ export class PlayersService {
       length: AUTH_TOKEN_LENGTH,
     });
 
+    let lobby: {
+      name: string;
+      id: number;
+      created_at: Date;
+      code: string;
+    } | null = null;
     if (dto.lobby) {
-      const lobby = await this.db
-        .selectFrom('lobbies')
-        .selectAll()
-        .where('code', '=', dto.lobby)
-        .executeTakeFirst();
+      lobby =
+        (await this.db
+          .selectFrom('lobbies')
+          .selectAll()
+          .where('code', '=', dto.lobby)
+          .executeTakeFirst()) ?? null;
 
       if (!lobby) {
         throw new NotFoundException('Invalid lobby code!');
@@ -58,39 +65,12 @@ export class PlayersService {
 
     return {
       token,
+      lobby,
     };
   }
 
-  async joinLobby(name: string, code: string) {
-    const lobby = await this.db
-      .selectFrom('lobbies')
-      .selectAll()
-      .where('code', '=', code)
-      .executeTakeFirst();
-
-    if (!lobby) {
-      throw new NotFoundException('Invalid lobby code!');
-    }
-
-    await this.db
-      .updateTable('players')
-      .set({
-        lobby: code,
-      })
-      .where('name', '=', name)
-      .execute();
-
-    this.logger.debug(`Player '${name}' joined lobby '${code}'!`);
-    return lobby;
-  }
-
-  async leaveLobby(name: string) {
-    await this.db
-      .updateTable('players')
-      .set('lobby', undefined)
-      .where('name', '=', name)
-      .execute();
-
+  async exit(name: string) {
+    await this.db.deleteFrom('players').where('name', '=', name).execute();
     this.logger.debug(`Player '${name}' left lobby!`);
   }
 
